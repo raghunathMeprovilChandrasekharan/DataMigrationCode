@@ -33,7 +33,7 @@ import com.demandware.xml.impex.customer._2006_10_31.Customers;
 import com.demandware.xml.impex.customer._2006_10_31.SharedTypeCustomAttribute;
 
 
-public class CompareCustomerList {
+public class ToroCustomerListTransormation {
 	static XMLGregorianCalendar compareCar;
 	static GregorianCalendar c_startDate = new GregorianCalendar();
 	static GregorianCalendar c_endDate = new GregorianCalendar();
