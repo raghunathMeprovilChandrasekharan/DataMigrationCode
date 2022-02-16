@@ -1,6 +1,6 @@
 package com.datamigration.pojo;
 
-public class PlumSliceProduct {
+public class PlumSliceProduct implements Comparable<PlumSliceProduct> {
 
 	private String productType = "";
 	private String firstPublishDate= "";
@@ -21,6 +21,20 @@ public class PlumSliceProduct {
 	private String skuId= "";
 	private String masterId= "";
 	private String associatedCatalog= "";
+	private String pattern_kate= "";
+	private String pattern_surprise= "";
+	public String getPattern_kate() {
+		return pattern_kate;
+	}
+	public void setPattern_kate(String pattern_kate) {
+		this.pattern_kate = pattern_kate;
+	}
+	public String getPattern_surprise() {
+		return pattern_surprise;
+	}
+	public void setPattern_surprise(String pattern_surprise) {
+		this.pattern_surprise = pattern_surprise;
+	}
 	public String getOnlineFlag_kate() {
 		return onlineFlag_kate;
 	}
@@ -142,6 +156,10 @@ public class PlumSliceProduct {
 	}
 	public void setProuctVideo(String prouctVideo) {
 		this.prouctVideo = prouctVideo;
+	}
+	@Override
+	public int compareTo(PlumSliceProduct pl) {
+		return this.getMasterId().compareTo(pl.getMasterId());
 	}
 
 	

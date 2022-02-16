@@ -38,7 +38,7 @@ import com.datamigration.javaclass.SharedTypeSiteSpecificDateTime;
 import com.datamigration.pojo.PlumSliceProduct;
 import com.datamigration.pojo.ProductData;
 
-public class CreatePlumSliceProductFeed {
+public class CreatePlumSliceProductFeedTemp {
 	private static String VARIATION_MASTER = "Variation-Master";
 	private static String VARIATION = "Variation";
 	private static String SKU = "SKU";
@@ -56,8 +56,6 @@ public class CreatePlumSliceProductFeed {
 	static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	static Pattern p = Pattern.compile(regex);
 	public static void main(String[] args) throws IOException, JAXBException, ParseException {
-		ExtractMasterData extMaster = new ExtractMasterData();
-		extMaster.executeLoad();		
 		PopulateMainDB mainDB = new PopulateMainDB();
 		mainDB.populateDB();
 		prouct_DB = mainDB.getProuct_DB();
@@ -199,7 +197,7 @@ public class CreatePlumSliceProductFeed {
 							masterListMap.put(tmpPrdDta.getMasterId(), PlumSliceProductList);
 							
 						}
-						plumsliceExatrct.add(plumSliceProduct);
+						//plumsliceExatrct.add(plumSliceProduct);
 					}
 					
 					/*
@@ -217,8 +215,9 @@ public class CreatePlumSliceProductFeed {
 		//System.out.println(productTypeList.keySet());
 		//writeInExcel();
 		extractMasterLevelProduct();
-		extractVariationLevelProducts();		
-		writeCsv();
+	//	extractVariationLevelProducts();		
+		//writeCsv();
+		writeMasterCSV();
 		System.out.println("FINISH..........................");
 		//System.out.println(plumsliceExatrct.size());
 	}
@@ -550,50 +549,18 @@ public class CreatePlumSliceProductFeed {
 		cal.setTime(date);
 		return cal;
 	}
-	private static void writeCsv() throws IOException {
+	
+	private static void writeMasterCSV() throws IOException {
 		// TODO Auto-generated method stub
-		FileWriter myWriter = new FileWriter(ext.getPropValue("plumslice_transformed_feed_csv"), false);
+		FileWriter myWriter = new FileWriter(ext.getPropValue("plumslice_transformed_feed_csv_delta"), false);
 		StringBuilder rows = new StringBuilder();
-		rows.append("\"SKU\",\"Variation ID\",\"Master ID\",\"Classification\",\"Product Type\",\"First Published Date\",\"Is New Arrival\",\"Is Exclusive\",\"Product Video\",\"Online Flag_KATE\",\"Online Flag_SURPRISE\",\"Online From_KATE\",\"Online From_SURPRISE\",\"Online To_KATE\",\"Online To_SURPRISE\",\"Searchable Flag_KATE\",\"Searchable Flag_SURPRISE\",\"SearchableifUnavailable_KATE\",\"SearchableifUnavailable_SURPRISE\",\"BRAND\"\n");
+		rows.append("Master ID\",\"Product Type\",\"BRAND\"\n");
 		for(PlumSliceProduct dataToInsert : plumsliceExatrct) {
+			
 			rows.append("\"");
-			rows.append(dataToInsert.getSkuId());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getVariationId());
-			rows.append("\",\"");
 			rows.append(dataToInsert.getMasterId());
 			rows.append("\",\"");
-			rows.append(dataToInsert.getItemCategory());
-			rows.append("\",\"");
 			rows.append(dataToInsert.getProductType());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getFirstPublishDate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getIsNewArrival());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getIsExclusive());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getProuctVideo());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineFlag_kate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineFlag_surprise());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineFrom_kate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineFrom_surprise());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineTo_kate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getOnlineTo_surprise());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getSearchableFlag_kate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getSearchableFlag_surprise());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getSearchableifUnavailable_kate());
-			rows.append("\",\"");
-			rows.append(dataToInsert.getSearchableifUnavailable_surprise());
 			rows.append("\",\"");
 			rows.append(dataToInsert.getAssociatedCatalog());
 			rows.append("\"\n");

@@ -22,4 +22,6 @@ public class ExtractMainProperties{
 		return prop.getProperty(propertiesNameVal);
 	}
 
+	
+
 }

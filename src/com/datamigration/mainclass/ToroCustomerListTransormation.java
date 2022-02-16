@@ -24,13 +24,15 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.json.simple.JSONObject;
+
 import com.demandware.xml.impex.customer._2006_10_31.ComplexTypeAddress;
 import com.demandware.xml.impex.customer._2006_10_31.ComplexTypeCustomer;
-import com.demandware.xml.impex.customer._2006_10_31.ComplexTypeHeader;
 import com.demandware.xml.impex.customer._2006_10_31.ComplexTypeProfile;
 import com.demandware.xml.impex.customer._2006_10_31.CustomerList;
 import com.demandware.xml.impex.customer._2006_10_31.Customers;
 import com.demandware.xml.impex.customer._2006_10_31.SharedTypeCustomAttribute;
+import com.demandware.xml.impex.customer._2006_10_31.SharedTypeCustomAttributes;
 
 
 public class ToroCustomerListTransormation {
@@ -40,12 +42,15 @@ public class ToroCustomerListTransormation {
 	static XMLGregorianCalendar startDate;
 	static XMLGregorianCalendar endDate;
 	static DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	static DateFormat orderDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	static ExtractMainProperties ext = new ExtractMainProperties();
 	static List<ComplexTypeCustomer> updatedCustomer =new ArrayList<ComplexTypeCustomer>();
 	//static ComplexTypeHeader updatedHEader;	
-	static String updatedListId ="Shop";
+	static String updatedListId ="KS_OneAccount";
 	static int batchSize;
 	static String exportPrefix ;
+	static String KATESPADE_ORDER="US_RETAIL";
+	static String SURPRISE_ORDER="US_OUTLET";
 	static boolean isFullLoad = false;
 	public static void main(String[] args) throws IOException, JAXBException, IntrospectionException, ParseException, DatatypeConfigurationException {
 		File legacyfile = new File(ext.getPropValue("legacy-customer-list"));
@@ -56,7 +61,7 @@ public class ToroCustomerListTransormation {
 		batchSize=Integer.valueOf(ext.getPropValue("batchSize_customerProfile"));
 		String delta_Load =ext.getPropValue("delta_Load");
 		if("false".equals(delta_Load)){
-			isFullLoad = true;
+			isFullLoad = true; 
 		}
 		
 		if(!startDateString.isBlank()) {
@@ -76,7 +81,7 @@ public class ToroCustomerListTransormation {
 			Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 			que = (CustomerList) jaxbUnmarshaller.unmarshal(legacyfile);
 			//updatedHEader = que.getHeader();
-			updatedListId = que.getListId();
+			//updatedListId = que.getListId();
 			customerList = que.getCustomer();
 			que = null;
 			}else {
@@ -90,6 +95,7 @@ public class ToroCustomerListTransormation {
 		
 		
 		for(ComplexTypeCustomer vComplexTypeCustomer : customerList) {
+			
 			ComplexTypeProfile profiles = vComplexTypeCustomer.getProfile();
 			 if(profiles == null ) {
 				 continue;
@@ -103,6 +109,7 @@ public class ToroCustomerListTransormation {
 			 }
 			 if(compareCar == null) { continue; }else {
 				 if(compareCar.compare(startDate) >= 0 && compareCar.compare(endDate) <= 0 ) {
+					 vComplexTypeCustomer = transformToTOROStandard(vComplexTypeCustomer);
 					 updatedCustomer.add(vComplexTypeCustomer);
 				 }
 			 }
@@ -139,6 +146,86 @@ public class ToroCustomerListTransormation {
 	
 	
 
+	}
+	private static ComplexTypeCustomer transformToTOROStandard(ComplexTypeCustomer vComplexTypeCustomer) throws ParseException {
+		vComplexTypeCustomer.setCustomerNo(null);		
+		SharedTypeCustomAttributes vSharedTypeCustomAttributes = vComplexTypeCustomer.getProfile().getCustomAttributes();
+		if(vSharedTypeCustomAttributes == null ) {
+			return vComplexTypeCustomer;
+		}
+		List<SharedTypeCustomAttribute> dataToCompare = vSharedTypeCustomAttributes.getCustomAttribute();
+		String addtoemaillist = "";
+		String nearestStoreID = "";
+		String latestOrderDateSale = "";
+		String latestOrderDateShop= "";
+		for(SharedTypeCustomAttribute vSharedTypeCustomAttribute : dataToCompare) {
+			if("addtoemaillist".equalsIgnoreCase(vSharedTypeCustomAttribute.getAttributeId())){
+				addtoemaillist = vSharedTypeCustomAttribute.getContent().get(0).toString();
+			}
+			if("nearestStoreID".equalsIgnoreCase(vSharedTypeCustomAttribute.getAttributeId())){
+				nearestStoreID = vSharedTypeCustomAttribute.getContent().get(0).toString();
+			}
+			if("latestOrderDateSale".equalsIgnoreCase(vSharedTypeCustomAttribute.getAttributeId())){
+				latestOrderDateSale = vSharedTypeCustomAttribute.getContent().get(0).toString();
+			}
+			if("latestOrderDateShop".equalsIgnoreCase(vSharedTypeCustomAttribute.getAttributeId())){
+				latestOrderDateShop = vSharedTypeCustomAttribute.getContent().get(0).toString();
+			}
+			
+			
+		}
+		List<SharedTypeCustomAttribute> tempDataToCompare = new ArrayList<SharedTypeCustomAttribute>();
+		SharedTypeCustomAttribute vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+		vSharedTypeCustomAttribute.setAttributeId("systemCountryCode");	
+		vSharedTypeCustomAttribute.getContent().add(0, "US");		
+		tempDataToCompare.add(vSharedTypeCustomAttribute);
+		
+		vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+		vSharedTypeCustomAttribute.setAttributeId("isCustomer360ProfileSyncPending");	
+		vSharedTypeCustomAttribute.getContent().add(0, "true");		
+		tempDataToCompare.add(vSharedTypeCustomAttribute);
+		
+		vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+		vSharedTypeCustomAttribute.setAttributeId("mktSourceCode");	
+		vSharedTypeCustomAttribute.getContent().add(0, "KS-ACCOUNT-REG");		
+		tempDataToCompare.add(vSharedTypeCustomAttribute);
+		
+		if( !addtoemaillist.isBlank() || !nearestStoreID.isBlank() ||!latestOrderDateSale.isBlank() ||!latestOrderDateShop.isBlank()){
+			
+			if( !addtoemaillist.isBlank() ) {
+				vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+				vSharedTypeCustomAttribute.setAttributeId("optIn");	
+				vSharedTypeCustomAttribute.getContent().add(0, addtoemaillist);		
+				tempDataToCompare.add(vSharedTypeCustomAttribute);
+			}
+			
+			if( !nearestStoreID.isBlank() ) {
+				vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+				vSharedTypeCustomAttribute.setAttributeId("retailPreferredStore");	
+				vSharedTypeCustomAttribute.getContent().add(0, nearestStoreID);		
+				tempDataToCompare.add(vSharedTypeCustomAttribute);
+			}
+			
+			if(!latestOrderDateSale.isBlank() ||!latestOrderDateShop.isBlank()) {
+				 JSONObject jsonVar = new JSONObject();
+				 if( !latestOrderDateSale.isBlank()  ) {
+					 jsonVar.put(SURPRISE_ORDER, df.format(orderDateFormat.parse(latestOrderDateSale)));
+				 }
+				 
+				 if( !latestOrderDateShop.isBlank()  ) {
+					 jsonVar.put(KATESPADE_ORDER,  df.format(orderDateFormat.parse(latestOrderDateShop)));
+				 }
+				 
+				vSharedTypeCustomAttribute = new SharedTypeCustomAttribute();
+				vSharedTypeCustomAttribute.setAttributeId("lastOrderDate");	
+				vSharedTypeCustomAttribute.getContent().add(0, jsonVar.toJSONString());		
+				tempDataToCompare.add(vSharedTypeCustomAttribute);
+			}
+		}
+		vSharedTypeCustomAttributes.getCustomAttribute().clear();
+		vSharedTypeCustomAttributes.getCustomAttribute().addAll(tempDataToCompare);	
+		// TODO Auto-generated method stub
+		return vComplexTypeCustomer;
 	}
 	private static void createBatchFile(CustomerList tempque) throws JAXBException, FileNotFoundException {
 		JAXBContext jaxbContext = JAXBContext.newInstance(CustomerList.class);
